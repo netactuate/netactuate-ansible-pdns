@@ -1,0 +1,7 @@
+---
+pdns_db_name: pdns
+pdns_db_user: pdns
+pdns_db_password: CHANGEME
+pdns_api_key: CHANGEME
+pdns_admin_email: admin@example.com
+pdns_anycast_ip: ""

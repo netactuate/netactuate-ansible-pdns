@@ -1,0 +1,41 @@
+---
+- name: Wait for MariaDB to be ready
+  ansible.builtin.wait_for:
+    port: 3306
+    host: 127.0.0.1
+    timeout: 30
+
+- name: Stop pdns before reconfiguring
+  ansible.builtin.service:
+    name: pdns
+    state: stopped
+  ignore_errors: yes
+
+- name: Remove default backend configs that conflict
+  ansible.builtin.shell: rm -f /etc/powerdns/pdns.d/*.conf
+  changed_when: true
+
+- name: Deploy pdns.conf
+  ansible.builtin.template:
+    src: pdns.conf.j2
+    dest: /etc/powerdns/pdns.conf
+    owner: pdns
+    group: pdns
+    mode: "0640"
+
+- name: Ensure port 53 is free
+  ansible.builtin.shell: fuser -k 53/tcp 53/udp 2>/dev/null || true
+  changed_when: false
+
+- name: Start PowerDNS
+  ansible.builtin.service:
+    name: pdns
+    state: started
+    enabled: yes
+
+- name: Add localhost to /etc/resolv.conf
+  ansible.builtin.lineinfile:
+    path: /etc/resolv.conf
+    line: "nameserver 127.0.0.1"
+    insertbefore: BOF
+    state: present

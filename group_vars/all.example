@@ -1,0 +1,14 @@
+---
+ansible_ssh_extra_args: '-o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10'
+
+# SECURITY: Never commit real values. Use ansible-vault for production.
+# ansible-vault encrypt_string 'value' --name 'pdns_db_password'
+pdns_db_name: pdns
+pdns_db_user: pdns
+pdns_db_password: CHANGEME
+
+pdns_api_key: CHANGEME
+pdns_admin_email: admin@example.com
+
+# IP address PowerDNS listens on — set to your anycast IP
+pdns_anycast_ip: "192.0.2.1"

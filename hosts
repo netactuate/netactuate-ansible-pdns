@@ -1,0 +1,2 @@
+[nodes]
+#example-LAX-edge1.example.com ansible_host=<IP> ansible_user=ubuntu

@@ -1,0 +1,74 @@
+- name: Deploy PowerDNS authoritative server on anycast nodes
+  hosts: nodes
+  remote_user: ubuntu
+  become: true
+  gather_facts: yes
+
+  pre_tasks:
+    - name: Stop and disable systemd-resolved
+      ansible.builtin.service:
+        name: systemd-resolved
+        state: stopped
+        enabled: no
+
+    - name: Remove /etc/resolv.conf symlink
+      ansible.builtin.file:
+        path: /etc/resolv.conf
+        state: absent
+
+    - name: Create static /etc/resolv.conf
+      ansible.builtin.copy:
+        dest: /etc/resolv.conf
+        content: "nameserver 8.8.8.8\n"
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - mariadb-server
+          - python3-mysqldb
+          - pdns-server
+          - pdns-backend-mysql
+          - dnsutils
+        state: present
+        update_cache: yes
+
+    - name: Ensure MariaDB is running
+      ansible.builtin.service:
+        name: mysql
+        state: started
+        enabled: true
+
+    - name: Create PowerDNS database
+      community.mysql.mysql_db:
+        name: "{{ pdns_db_name }}"
+        state: present
+        login_user: root
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Create PowerDNS database user
+      community.mysql.mysql_user:
+        name: "{{ pdns_db_user }}"
+        password: "{{ pdns_db_password }}"
+        priv: "{{ pdns_db_name }}.*:ALL"
+        host: "localhost"
+        state: present
+        login_user: root
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Check if schema already imported
+      ansible.builtin.stat:
+        path: "/var/lib/mysql/{{ pdns_db_name }}/domains.ibd"
+      register: pdns_schema
+
+    - name: Import PowerDNS schema
+      community.mysql.mysql_db:
+        name: "{{ pdns_db_name }}"
+        state: import
+        target: /usr/share/pdns-backend-mysql/schema/schema.mysql.sql
+        login_user: root
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      when: not pdns_schema.stat.exists
+
+  roles:
+    - role: pdns
+      tags: pdns

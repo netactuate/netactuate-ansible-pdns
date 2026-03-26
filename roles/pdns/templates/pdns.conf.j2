@@ -1,0 +1,16 @@
+launch=gmysql
+gmysql-host=127.0.0.1
+gmysql-user={{ pdns_db_user }}
+gmysql-password={{ pdns_db_password }}
+gmysql-dbname={{ pdns_db_name }}
+
+local-address=0.0.0.0
+local-port=53
+
+api=yes
+api-key={{ pdns_api_key }}
+webserver=yes
+webserver-address=127.0.0.1
+webserver-port=8081
+
+loglevel=6
